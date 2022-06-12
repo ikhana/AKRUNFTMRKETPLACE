@@ -1,4 +1,4 @@
-# Basic Sample Hardhat Project
+# Basic Sample NFTMARKETPLACE project
 
 This repository demostartes a sample nft markeplace with following features 
 
