@@ -1,15 +1,22 @@
 # Basic Sample Hardhat Project
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, a sample script that deploys that contract, and an example of a task implementation, which simply lists the available accounts.
+This repository demostartes a sample nft markeplace with following features 
+
+1) User Can create Marketplace Listing 
+
+2) User Can buy from marketplace listing
+
+3) NFT Ower can add the royality and will recieve the royality whenever a secondary sell occures 
+
+4) User can place the item on a discount price
 
 Try running some of the following tasks:
 
 ```shell
-npx hardhat accounts
-npx hardhat compile
-npx hardhat clean
-npx hardhat test
-npx hardhat node
-node scripts/sample-script.js
-npx hardhat help
+npx hardhat compile  => to genrate the ABI of the code if you wish to change
+npx hardhat clean    =>  to clear all the compilation 
+npx hardhat test     => Try chechking your uint tests
+npx hardhat node     => If you want to paly with local node instead fetching some remote node of block chain networks for test
+node scripts/sample-script.js   => Runing your scripts written in script file   
+npx hardhat help     
 ```
