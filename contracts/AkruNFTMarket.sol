@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -12,8 +12,14 @@ contract NFTMarket is ReentrancyGuard {
   Counters.Counter private _itemIds;
   Counters.Counter private _itemsSold;
 
+
   address payable owner;
   uint256 listingPrice = 0.025 ether;
+  uint discountTime  =  8900;
+  
+  
+  
+  
 
   constructor() {
     owner = payable(msg.sender);
@@ -30,7 +36,7 @@ contract NFTMarket is ReentrancyGuard {
   }
 
   mapping(uint256 => MarketItem) private idToMarketItem;
-
+  mapping(uint256 => MarketItem) private idToDiscountedItem;
   event MarketItemCreated (
     uint indexed itemId,
     address indexed nftContract,
@@ -57,7 +63,6 @@ contract NFTMarket is ReentrancyGuard {
 
     _itemIds.increment();
     uint256 itemId = _itemIds.current();
-  
     idToMarketItem[itemId] =  MarketItem(
       itemId,
       nftContract,
@@ -81,6 +86,40 @@ contract NFTMarket is ReentrancyGuard {
     );
   }
 
+  function createDiscountedMarketitem (address nftContract,uint256 tokenId,uint256 price) public payable nonReentrant{
+    require(price -(price/100)*2 > 0, "Price must be at least 1 wei");
+    require(msg.value == listingPrice, "Price must be equal to listing price");
+
+    _itemIds.increment();
+    uint256 itemId = _itemIds.current();
+    idToMarketItem[itemId] =  MarketItem(
+      itemId,
+      nftContract,
+      tokenId,
+      payable(msg.sender),
+      payable(address(0)),
+      price -(price/100)*2 ,
+      false
+    );
+
+    IERC721(nftContract).transferFrom(msg.sender, address(this), tokenId);
+
+    emit MarketItemCreated(
+      itemId,
+      nftContract,
+      tokenId,
+      msg.sender,
+      address(0),
+      price,
+      false
+    );
+       
+
+
+
+
+  }
+
   /* Creates the sale of a marketplace item */
   /* Transfers ownership of the item, as well as funds between parties */
   function createMarketSale(
@@ -99,6 +138,24 @@ contract NFTMarket is ReentrancyGuard {
     payable(owner).transfer(listingPrice);
   }
 
+  function createDiscountedMarketSale(
+    
+ 
+    address nftContract,
+    uint256 itemId
+    ) public payable nonReentrant {
+      //require(block.timestamp < discountTime, "Discount ended");
+    uint discountedPrice = idToDiscountedItem[itemId].price;
+    uint tokenId = idToDiscountedItem[itemId].tokenId;
+    require(msg.value == discountedPrice, "Please submit the asking price in order to complete the purchase");
+
+    idToDiscountedItem[itemId].seller.transfer(msg.value);
+    IERC721(nftContract).transferFrom(address(this), msg.sender, tokenId);
+    idToDiscountedItem[itemId].owner = payable(msg.sender);
+    idToDiscountedItem[itemId].sold = true;
+    _itemsSold.increment();
+    payable(owner).transfer(listingPrice);
+  }
   /* Returns all unsold market items */
   function fetchMarketItems() public view returns (MarketItem[] memory) {
     uint itemCount = _itemIds.current();
@@ -116,6 +173,7 @@ contract NFTMarket is ReentrancyGuard {
     }
     return items;
   }
+  
 
   /* Returns onlyl items that a user has purchased */
   function fetchMyNFTs() public view returns (MarketItem[] memory) {
